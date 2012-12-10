@@ -1661,9 +1661,15 @@ run(void) {
 	XEvent ev;
 	/* main event loop */
 	XSync(dpy, False);
-	while(running && !XNextEvent(dpy, &ev))
+  static time_t last_time = 0;
+	while(running && !XNextEvent(dpy, &ev)){
 		if(handler[ev.type])
 			handler[ev.type](&ev); /* call handler */
+    if( last_time + 30 < time(0) ){
+      last_time = time(0);
+      updatestatus();
+    }
+  }
 }
 
 void
@@ -2315,14 +2321,16 @@ updatetitle(Client *c) {
 void
 updatestatus(void) {
   static char status[256];
-  static time_t time;
+  static time_t now;
   int len;
+
 	if(!gettextprop(root, XA_WM_NAME, status, sizeof(status)))
 		strcpy(status, "dwm-"VERSION);
 
   strncpy(stext,status, 256);
   len = sizeof(char)*strlen(stext);
-  strftime(stext+len, 256-len, " %H:%M", localtime(&time));
+  time(&now);
+  strftime(stext+len, 256-len, " %H:%M", localtime(&now));
 	drawbar(selmon);
 }
 
